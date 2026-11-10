@@ -1,0 +1,49 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "table_id": "{{table_id}}",
+    "notes": "No spicy food",
+    "items": [
+      {
+        "menu_item_id": "{{menu_item_id}}",
+        "quantity": 2,
+        "special_request": "Well done"
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("order_id", res.body.data.id);
+    bru.setVar("order_item_id", res.body.data.items[0].id);
+    console.log("Order ID saved:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Order created", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.status).to.equal("pending");
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Update Status - Served
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/api/v1/orders/{{order_id}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "status": "served"
+  }
+}
+
+tests {
+  test("Order served", function() {
+    expect(res.status).to.equal(200);
+  });
+}
