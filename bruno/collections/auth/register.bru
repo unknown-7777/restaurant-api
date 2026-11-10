@@ -1,0 +1,32 @@
+meta {
+  name: Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Test Customer",
+    "email": "customer@restaurant.com",
+    "password": "password",
+    "password_confirmation": "password"
+  }
+}
+
+tests {
+  test("Register successful", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.success).to.equal(true);
+  });
+}

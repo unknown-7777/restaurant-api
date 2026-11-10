@@ -1,0 +1,27 @@
+meta {
+  name: Me
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("Get authenticated user", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+    expect(res.body.data.email).to.be.a("string");
+  });
+}

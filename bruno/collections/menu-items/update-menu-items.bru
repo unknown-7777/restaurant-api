@@ -1,0 +1,34 @@
+meta {
+  name: Update Menu Item
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/v1/menu-items/{{menu_item_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "price": 14.99,
+    "is_available": true
+  }
+}
+
+tests {
+  test("Menu item updated", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+  });
+}

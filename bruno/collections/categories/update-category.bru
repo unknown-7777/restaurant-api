@@ -1,0 +1,35 @@
+meta {
+  name: Update Category
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/v1/categories/{{category_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Main Courses",
+    "sort_order": 1,
+    "is_active": true
+  }
+}
+
+tests {
+  test("Category updated", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+  });
+}

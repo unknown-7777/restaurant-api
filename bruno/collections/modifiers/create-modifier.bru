@@ -1,0 +1,43 @@
+meta {
+  name: Create Modifier
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/menu-items/{{menu_item_id}}/modifiers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Extra Sauce",
+    "type": "single",
+    "price_delta": 1.50,
+    "is_available": true
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("modifier_id", res.body.data.id);
+    console.log("Modifier ID saved:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Modifier created", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.success).to.equal(true);
+  });
+}

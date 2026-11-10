@@ -1,0 +1,42 @@
+meta {
+  name: Create Category
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Main Course",
+    "sort_order": 1,
+    "is_active": true
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("category_id", res.body.data.id);
+    console.log("Category ID saved:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Category created", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.slug).to.equal("main-course");
+  });
+}

@@ -1,0 +1,41 @@
+meta {
+  name: Create Table
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/tables
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "number": 1,
+    "capacity": 4
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("table_id", res.body.data.id);
+    console.log("Table ID saved:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Table created", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.success).to.equal(true);
+  });
+}

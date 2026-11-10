@@ -1,0 +1,45 @@
+meta {
+  name: Create Menu Item
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/menu-items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "category_id": "{{category_id}}",
+    "name": "Grilled Chicken",
+    "description": "Tender grilled chicken with herbs",
+    "price": 12.99,
+    "is_available": true,
+    "sort_order": 1
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("menu_item_id", res.body.data.id);
+    console.log("Menu Item ID saved:", res.body.data.id);
+  }
+}
+
+tests {
+  test("Menu item created", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.slug).to.equal("grilled-chicken");
+  });
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Get Menu Item
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/menu-items/{{menu_item_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("Returns menu item", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+  });
+}
