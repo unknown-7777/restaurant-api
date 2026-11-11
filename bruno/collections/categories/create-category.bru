@@ -10,13 +10,13 @@ post {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{token}}
-}
-
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {
@@ -25,6 +25,7 @@ body:json {
     "sort_order": 1,
     "is_active": true
   }
+  
 }
 
 script:post-response {

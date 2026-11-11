@@ -23,4 +23,13 @@ class UpdateMenuItemRequest extends FormRequest
             'sort_order'   => ['sometimes', 'integer', 'min:0'],
         ];
     }
+
+    public function prepareForValidation(): void
+    {
+        if ($this->has('is_available')) {
+            $this->merge([
+                'is_available' => filter_var($this->is_available, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
+            ]);
+        }
+    }
 }
