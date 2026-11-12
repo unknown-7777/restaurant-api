@@ -1,0 +1,26 @@
+meta {
+  name: List Restaurant Feedback
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/feedback
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("Returns restaurant feedback", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+  });
+}

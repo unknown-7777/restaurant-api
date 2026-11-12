@@ -1,0 +1,34 @@
+meta {
+  name: Pay Table Bill
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/tables/{{table_id}}/pay
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+  "method": "cash",
+  "amount": "{{payment_amount}}"
+  }
+}
+
+tests {
+  test("Table bill paid", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+  });
+}
