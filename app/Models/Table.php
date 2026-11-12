@@ -16,7 +16,14 @@ class Table extends Model
         'capacity',
         'status',
         'qr_code',
+        'bill_requested_at',
+        'bill_requested_method',
     ];
+
+    protected function casts(): array
+    {
+        return ['bill_requested_at' => 'datetime'];
+    }
 
     public function orders(): HasMany
     {

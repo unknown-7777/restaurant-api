@@ -33,6 +33,12 @@ class MenuItemSeeder extends Seeder
             'latte' => 'menu-images/cappuccino.jpg',
             'fresh-orange-juice' => 'menu-images/orange-juice.jpg',
             'mango-smoothie' => 'menu-images/mango-smoothie.jpg',
+            'bbq-ribs' => 'menu-images/bbq-ribs.jpg',
+            'garlic-bread' => 'menu-images/garlic-bread.jpg',
+            'green-tea' => 'menu-images/green-tea.jpg',
+            'iced-coffee' => 'menu-images/iced-coffee.jpg',
+            'soft-drink' => 'menu-images/soft-drink.jpg',
+            'sparkling-water' => 'menu-images/sparkling-water.jpg',
         ];
 
         $items = [

@@ -10,10 +10,12 @@ use App\Http\Requests\Order\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Table;
 use App\Services\OrderService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -61,15 +63,36 @@ class OrderController extends Controller
 
     public function storeFromQr(StoreQrOrderRequest $request): JsonResponse
     {
-        $tableId = \App\Models\Table::where('qr_code', $request->table_qr_code)->value('id');
+        $table = \App\Models\Table::where('qr_code', $request->table_qr_code)->firstOrFail();
+        if ($table->bill_requested_at) {
+            return $this->error('The table bill has been requested. Please wait for staff to finish payment before placing another order.', 422);
+        }
+
         $order = $this->orderService->createOrder([
-            'table_id' => $tableId,
+            'table_id' => $table->id,
             'user_id'  => null,
             'notes'    => $request->notes,
             'items'    => $request->items,
         ]);
 
         return $this->success(new OrderResource($order), 'QR order created.', 201);
+    }
+
+    public function showManyFromQr(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'table_qr_code' => ['required', 'uuid', 'exists:tables,qr_code'],
+            'order_ids' => ['required', 'array', 'min:1', 'max:10'],
+            'order_ids.*' => ['required', 'uuid'],
+        ]);
+
+        $orders = Order::whereIn('id', $validated['order_ids'])
+            ->whereHas('table', fn ($query) => $query->where('qr_code', $validated['table_qr_code']))
+            ->with(['table', 'items.menuItem', 'items.modifiers', 'payment'])
+            ->latest()
+            ->get();
+
+        return $this->success(OrderResource::collection($orders));
     }
 
     public function show(Order $order): JsonResponse

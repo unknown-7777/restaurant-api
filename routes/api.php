@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\TableController;
 use App\Http\Controllers\Api\V1\UploadController;
+use App\Http\Controllers\Api\V1\RestaurantFeedbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -26,7 +27,10 @@ Route::prefix('v1')->group(function () {
     Route::get('menu-items/{menuItem}', [MenuItemController::class, 'show']);
     Route::get('menu-items/{menuItem}/modifiers', [ModifierController::class, 'index']);
     Route::get('tables/qr/{qrCode}', [TableController::class, 'showByQrCode']);
-    Route::post('qr-orders', [OrderController::class, 'storeFromQr'])->middleware('throttle:30,1');
+    Route::post('qr-orders', [OrderController::class, 'storeFromQr'])->middleware('throttle:120,1');
+    Route::post('qr-orders/status', [OrderController::class, 'showManyFromQr'])->middleware('throttle:120,1');
+    Route::post('qr-tables/request-bill', [TableController::class, 'requestBillFromQr'])->middleware('throttle:20,1');
+    Route::post('qr-orders/{order}/feedback', [RestaurantFeedbackController::class, 'storeFromQr'])->middleware('throttle:20,1');
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -38,6 +42,10 @@ Route::prefix('v1')->group(function () {
         });
 
         // Users — admin only
+        Route::middleware('role:admin,manager')->group(function () {
+            Route::get('feedback', [RestaurantFeedbackController::class, 'index']);
+        });
+
         Route::middleware('role:admin')->group(function () {
             Route::get('users', [UserController::class, 'index']);
             Route::post('users', [UserController::class, 'store']);
@@ -89,8 +97,9 @@ Route::prefix('v1')->group(function () {
         Route::delete('orders/{order}/items/{item}', [OrderController::class, 'removeItem']);
 
         // Payments — cashier/admin/manager only
-        Route::middleware('role:admin,manager,cashier')->group(function () {
+        Route::middleware('role:admin,manager,cashier,waiter')->group(function () {
             Route::post('orders/{order}/pay', [PaymentController::class, 'store']);
+            Route::post('tables/{table}/pay', [PaymentController::class, 'storeForTable']);
         });
 
     });

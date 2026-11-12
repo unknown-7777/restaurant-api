@@ -15,6 +15,9 @@ class TableResource extends JsonResource
             'capacity'   => $this->capacity,
             'status'     => $this->status,
             'qr_code'    => $this->qr_code,
+            'bill_requested_at' => $this->bill_requested_at?->toDateTimeString(),
+            'bill_requested_method' => $this->bill_requested_method,
+            'bill_total' => $this->relationLoaded('orders') ? number_format($this->orders->sum('total_amount'), 2, '.', '') : null,
             'qr_url'     => $this->qr_code && config('app.frontend_url')
                               ? rtrim(config('app.frontend_url'), '/') . '/order?table=' . urlencode($this->qr_code)
                               : null,

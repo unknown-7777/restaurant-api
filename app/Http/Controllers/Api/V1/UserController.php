@@ -23,6 +23,10 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
         if ($request->has('search')) {
             $search = '%' . mb_strtolower($request->search) . '%';
             $query->where(function ($q) use ($search) {

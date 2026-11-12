@@ -9,6 +9,8 @@ use App\Http\Resources\TableResource;
 use App\Models\Table;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TableController extends Controller
@@ -25,8 +27,51 @@ class TableController extends Controller
     public function showByQrCode(string $qrCode): JsonResponse
     {
         $table = Table::where('qr_code', $qrCode)->firstOrFail();
+        $this->loadUnpaidBillOrders($table);
 
         return $this->success(new TableResource($table));
+    }
+
+    public function requestBillFromQr(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'table_qr_code' => ['required', 'uuid', 'exists:tables,qr_code'],
+            'method' => ['required', 'in:cash,card,qris'],
+        ]);
+
+        $result = DB::transaction(function () use ($data) {
+            $table = Table::where('qr_code', $data['table_qr_code'])->lockForUpdate()->firstOrFail();
+            $unpaidOrders = $table->orders()
+                ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
+                ->whereDoesntHave('payment')
+                ->lockForUpdate()
+                ->get();
+
+            if ($unpaidOrders->isEmpty()) {
+                return ['error' => 'There are no unpaid orders for this table.'];
+            }
+
+            if ($unpaidOrders->contains(fn ($order) => $order->status !== 'served')) {
+                return ['error' => 'Please wait until all table orders have been served before requesting one bill.'];
+            }
+
+            if (!$table->bill_requested_at) {
+                $table->update([
+                    'bill_requested_at' => now(),
+                    'bill_requested_method' => $data['method'],
+                ]);
+            }
+
+            return ['table' => $table->fresh()];
+        });
+
+        if (isset($result['error'])) {
+            return $this->error($result['error'], 422);
+        }
+
+        $this->loadUnpaidBillOrders($result['table']);
+
+        return $this->success(new TableResource($result['table']), 'One bill requested for all served table orders.');
     }
 
     public function store(StoreTableRequest $request): JsonResponse
@@ -68,5 +113,12 @@ class TableController extends Controller
         $table->delete();
 
         return $this->success(null, 'Table deleted.');
+    }
+
+    private function loadUnpaidBillOrders(Table $table): void
+    {
+        $table->load(['orders' => fn ($query) => $query
+            ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
+            ->whereDoesntHave('payment')]);
     }
 }

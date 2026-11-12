@@ -88,6 +88,10 @@ class OrderService
 
     public function updateStatus(Order $order, string $newStatus): Order
     {
+        if ($newStatus === 'paid' && !$order->payment()->exists()) {
+            throw new \InvalidArgumentException('Record the payment before marking this order as paid.');
+        }
+
         $allowed = self::TRANSITIONS[$order->status] ?? [];
 
         if (!in_array($newStatus, $allowed)) {

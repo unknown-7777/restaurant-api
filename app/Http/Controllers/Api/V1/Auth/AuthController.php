@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Traits\ApiResponse;
@@ -56,21 +55,12 @@ class AuthController extends Controller
         ], 'Login successful.');
     }
 
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(): JsonResponse
     {
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => $request->password,
-            'role'     => 'customer',
-        ]);
-
-        $token = $user->createToken('customer-token')->plainTextToken;
-
-        return $this->success([
-            'user'  => new UserResource($user),
-            'token' => $token,
-        ], 'Registration successful.', 201);
+        return $this->error(
+            'Customer accounts are not required. Scan the QR code at your table to browse the menu and order.',
+            403
+        );
     }
 
     public function me(Request $request): JsonResponse

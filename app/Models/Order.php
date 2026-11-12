@@ -20,12 +20,15 @@ class Order extends Model
         'status',
         'total_amount',
         'notes',
+        'payment_requested_at',
+        'payment_requested_method',
     ];
 
     protected function casts(): array
     {
         return [
             'total_amount' => 'decimal:2',
+            'payment_requested_at' => 'datetime',
         ];
     }
 

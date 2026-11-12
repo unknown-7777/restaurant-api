@@ -17,6 +17,8 @@ class OrderResource extends JsonResource
             'status'       => $this->status,
             'total_amount' => $this->total_amount,
             'notes'        => $this->notes,
+            'payment_requested_at' => $this->payment_requested_at?->toDateTimeString(),
+            'payment_requested_method' => $this->payment_requested_method,
             'items'        => OrderItemResource::collection($this->whenLoaded('items')),
             'payment'      => new PaymentResource($this->whenLoaded('payment')),
             'created_at'   => $this->created_at->toDateTimeString(),
