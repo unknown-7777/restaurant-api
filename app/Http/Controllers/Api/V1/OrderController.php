@@ -104,6 +104,24 @@ class OrderController extends Controller
 
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
+        $role = $request->user()->role;
+        $kitchenStatuses = ['preparing', 'ready'];
+        $waiterStatuses = ['confirmed', 'cancelled', 'served'];
+
+        if (in_array($request->status, $kitchenStatuses, true)
+            && !in_array($role, ['kitchen', 'admin', 'manager'], true)) {
+            return $this->error('Kitchen staff handle preparing and ready statuses.', 403);
+        }
+
+        if (in_array($request->status, $waiterStatuses, true)
+            && !in_array($role, ['waiter', 'admin', 'manager'], true)) {
+            return $this->error('Waiters handle confirming, cancelling, and serving orders.', 403);
+        }
+
+        if ($request->status === 'paid') {
+            return $this->error('Use the payment endpoint to mark an order as paid.', 422);
+        }
+
         try {
             $order = $this->orderService->updateStatus($order, $request->status);
             return $this->success(new OrderResource($order), 'Order status updated.');
