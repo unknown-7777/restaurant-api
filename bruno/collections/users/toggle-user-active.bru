@@ -1,0 +1,19 @@
+meta {
+  name: Toggle User Active
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/api/v1/users/{{user_id}}/toggle-active
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}

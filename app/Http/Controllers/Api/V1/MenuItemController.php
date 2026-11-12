@@ -7,15 +7,17 @@ use App\Http\Requests\MenuItem\StoreMenuItemRequest;
 use App\Http\Requests\MenuItem\UpdateMenuItemRequest;
 use App\Http\Resources\MenuItemResource;
 use App\Models\MenuItem;
+use App\Services\ImageService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MenuItemController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(protected ImageService $imageService) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -35,7 +37,7 @@ class MenuItemController extends Controller
             $query->where('name', 'ilike', '%' . $request->search . '%');
         }
 
-        $items = $query->paginate($request->get('per_page', 15));
+        $items = $query->paginate($request->integer('per_page', 15));
 
         return $this->success([
             'items' => MenuItemResource::collection($items),
@@ -53,7 +55,11 @@ class MenuItemController extends Controller
         $imagePath = null;
 
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('menu-items', 'public');
+            $imagePath = $this->imageService->store(
+                $request->file('image'),
+                'menu-items',
+                1200
+            );
         }
 
         $item = MenuItem::create([
@@ -92,10 +98,12 @@ class MenuItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            if ($menuItem->image_path) {
-                Storage::disk('public')->delete($menuItem->image_path);
-            }
-            $data['image_path'] = $request->file('image')->store('menu-items', 'public');
+            $this->imageService->delete($menuItem->image_path);
+            $data['image_path'] = $this->imageService->store(
+                $request->file('image'),
+                'menu-items',
+                1200
+            );
         }
 
         $menuItem->update($data);
@@ -106,10 +114,7 @@ class MenuItemController extends Controller
 
     public function destroy(MenuItem $menuItem): JsonResponse
     {
-        if ($menuItem->image_path) {
-            Storage::disk('public')->delete($menuItem->image_path);
-        }
-
+        $this->imageService->delete($menuItem->image_path);
         $menuItem->delete();
 
         return $this->success(null, 'Menu item deleted.');

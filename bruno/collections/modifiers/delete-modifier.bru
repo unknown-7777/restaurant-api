@@ -1,0 +1,19 @@
+meta {
+  name: Delete Modifier
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/v1/menu-items/{{menu_item_id}}/modifiers/{{modifier_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}

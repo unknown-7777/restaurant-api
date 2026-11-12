@@ -15,8 +15,8 @@ class TableResource extends JsonResource
             'capacity'   => $this->capacity,
             'status'     => $this->status,
             'qr_code'    => $this->qr_code,
-            'qr_url'     => $this->qr_code
-                              ? url("/menu?table={$this->qr_code}")
+            'qr_url'     => $this->qr_code && config('app.frontend_url')
+                              ? rtrim(config('app.frontend_url'), '/') . '/order?table=' . urlencode($this->qr_code)
                               : null,
             'created_at' => $this->created_at->toDateTimeString(),
         ];

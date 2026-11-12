@@ -29,6 +29,7 @@ body:json {
 script:post-response {
   if (res.status === 201) {
     bru.setVar("table_id", res.body.data.id);
+    bru.setVar("table_qr_code", res.body.data.qr_code);
     console.log("Table ID saved:", res.body.data.id);
   }
 }

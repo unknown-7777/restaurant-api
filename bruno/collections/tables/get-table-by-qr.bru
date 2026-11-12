@@ -1,0 +1,15 @@
+meta {
+  name: Get Table By QR Code
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/v1/tables/qr/{{table_qr_code}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}

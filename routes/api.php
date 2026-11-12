@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\MenuItemController;
 use App\Http\Controllers\Api\V1\ModifierController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\TableController;
+use App\Http\Controllers\Api\V1\UploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -23,6 +25,8 @@ Route::prefix('v1')->group(function () {
     Route::get('menu-items', [MenuItemController::class, 'index']);
     Route::get('menu-items/{menuItem}', [MenuItemController::class, 'show']);
     Route::get('menu-items/{menuItem}/modifiers', [ModifierController::class, 'index']);
+    Route::get('tables/qr/{qrCode}', [TableController::class, 'showByQrCode']);
+    Route::post('qr-orders', [OrderController::class, 'storeFromQr'])->middleware('throttle:30,1');
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -32,6 +36,19 @@ Route::prefix('v1')->group(function () {
             Route::get('me', [AuthController::class, 'me']);
             Route::post('logout', [AuthController::class, 'logout']);
         });
+
+        // Users — admin only
+        Route::middleware('role:admin')->group(function () {
+            Route::get('users', [UserController::class, 'index']);
+            Route::post('users', [UserController::class, 'store']);
+            Route::get('users/{user}', [UserController::class, 'show']);
+            Route::put('users/{user}', [UserController::class, 'update']);
+            Route::delete('users/{user}', [UserController::class, 'destroy']);
+            Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive']);
+        });
+
+        Route::post('upload/avatar', [UploadController::class, 'avatar']);
+        Route::delete('upload/avatar', [UploadController::class, 'removeAvatar']);
 
         // Categories — admin/manager only
         Route::middleware('role:admin,manager')->group(function () {

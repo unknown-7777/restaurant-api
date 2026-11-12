@@ -1,0 +1,35 @@
+meta {
+  name: Create QR Guest Order
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/api/v1/qr-orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "table_qr_code": "{{table_qr_code}}",
+    "notes": "Please bring extra napkins",
+    "items": [
+      {
+        "menu_item_id": "{{menu_item_id}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("order_id", res.body.data.id);
+  }
+}

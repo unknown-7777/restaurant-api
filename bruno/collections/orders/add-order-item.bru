@@ -1,0 +1,28 @@
+meta {
+  name: Add Order Item
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/v1/orders/{{order_id}}/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "menu_item_id": "{{menu_item_id}}",
+    "quantity": 1,
+    "special_request": "No onions"
+  }
+}

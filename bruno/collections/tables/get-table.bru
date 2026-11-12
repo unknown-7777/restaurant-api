@@ -1,0 +1,19 @@
+meta {
+  name: Get Table
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/v1/tables/{{table_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}

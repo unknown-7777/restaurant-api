@@ -16,6 +16,9 @@ class UserResource extends JsonResource
             'role'       => $this->role,
             'role_label' => ucfirst($this->role),
             'is_active'  => $this->is_active,
+            'avatar_url' => $this->avatar_path
+                              ? asset('storage/' . $this->avatar_path)
+                              : null,
             'created_at' => $this->created_at->toDateTimeString(),
         ];
     }

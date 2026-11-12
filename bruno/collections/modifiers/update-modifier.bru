@@ -1,0 +1,28 @@
+meta {
+  name: Update Modifier
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/v1/menu-items/{{menu_item_id}}/modifiers/{{modifier_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Extra Sauce",
+    "price_delta": 2.00,
+    "is_available": true
+  }
+}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\AddOrderItemRequest;
+use App\Http\Requests\Order\StoreQrOrderRequest;
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
@@ -56,6 +57,19 @@ class OrderController extends Controller
         ]);
 
         return $this->success(new OrderResource($order), 'Order created.', 201);
+    }
+
+    public function storeFromQr(StoreQrOrderRequest $request): JsonResponse
+    {
+        $tableId = \App\Models\Table::where('qr_code', $request->table_qr_code)->value('id');
+        $order = $this->orderService->createOrder([
+            'table_id' => $tableId,
+            'user_id'  => null,
+            'notes'    => $request->notes,
+            'items'    => $request->items,
+        ]);
+
+        return $this->success(new OrderResource($order), 'QR order created.', 201);
     }
 
     public function show(Order $order): JsonResponse

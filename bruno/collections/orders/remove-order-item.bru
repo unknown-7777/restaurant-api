@@ -1,0 +1,19 @@
+meta {
+  name: Remove Order Item
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/api/v1/orders/{{order_id}}/items/{{order_item_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}

@@ -22,6 +22,13 @@ class TableController extends Controller
         return $this->success(TableResource::collection($tables));
     }
 
+    public function showByQrCode(string $qrCode): JsonResponse
+    {
+        $table = Table::where('qr_code', $qrCode)->firstOrFail();
+
+        return $this->success(new TableResource($table));
+    }
+
     public function store(StoreTableRequest $request): JsonResponse
     {
         $table = Table::create([
@@ -41,6 +48,16 @@ class TableController extends Controller
 
     public function update(UpdateTableRequest $request, Table $table): JsonResponse
     {
+        if ($request->filled('status') && $request->status !== 'occupied') {
+            $hasOpenOrders = $table->orders()
+                ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
+                ->exists();
+
+            if ($hasOpenOrders) {
+                return $this->error('This table has an open order and must remain occupied.', 422);
+            }
+        }
+
         $table->update($request->only(['status', 'capacity']));
 
         return $this->success(new TableResource($table), 'Table updated.');

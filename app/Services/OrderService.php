@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Table;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -29,6 +30,8 @@ class OrderService
                 'total_amount' => 0,
                 'notes'        => $data['notes'] ?? null,
             ]);
+
+            $this->syncTableStatus($order->table_id);
 
             if (!empty($data['items'])) {
                 $this->addItems($order, $data['items']);
@@ -72,6 +75,7 @@ class OrderService
         }
 
         $this->recalculateTotal($order);
+        $this->syncTableStatus($order->table_id);
     }
 
     public function removeItem(Order $order, OrderItem $item): void
@@ -79,6 +83,7 @@ class OrderService
         $item->modifiers()->delete();
         $item->delete();
         $this->recalculateTotal($order);
+        $this->syncTableStatus($order->table_id);
     }
 
     public function updateStatus(Order $order, string $newStatus): Order
@@ -93,7 +98,26 @@ class OrderService
 
         $order->update(['status' => $newStatus]);
 
+        if (in_array($newStatus, ['paid', 'cancelled'], true)) {
+            $this->syncTableStatus($order->table_id);
+        }
+
         return $order->fresh(['items.modifiers', 'table', 'payment']);
+    }
+
+    private function syncTableStatus(?string $tableId): void
+    {
+        if (!$tableId) {
+            return;
+        }
+
+        $hasOpenOrders = Order::where('table_id', $tableId)
+            ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
+            ->exists();
+
+        Table::whereKey($tableId)->update([
+            'status' => $hasOpenOrders ? 'occupied' : 'available',
+        ]);
     }
 
     public function recalculateTotal(Order $order): void

@@ -30,11 +30,29 @@ class AuthController extends Controller
             return $this->error('Your account has been deactivated.', 403);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        // Revoke all previous tokens
+        $user->tokens()->delete();
+
+        // Set expiry based on role
+        $expiresAt = match($user->role) {
+            'customer' => now()->addHours(24),
+            'kitchen'  => now()->addHours(12),
+            default    => now()->addHours(8),
+        };
+
+        $deviceName = $request->header('User-Agent', 'unknown-device');
+        $tokenName  = $user->role . '-token|' . substr($deviceName, 0, 40);
+
+        $token = $user->createToken(
+            $tokenName,
+            ['*'],
+            $expiresAt
+        )->plainTextToken;
 
         return $this->success([
-            'user'  => new UserResource($user),
-            'token' => $token,
+            'user'       => new UserResource($user),
+            'token'      => $token,
+            'expires_at' => $expiresAt->toDateTimeString(),
         ], 'Login successful.');
     }
 
@@ -47,7 +65,7 @@ class AuthController extends Controller
             'role'     => 'customer',
         ]);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $user->createToken('customer-token')->plainTextToken;
 
         return $this->success([
             'user'  => new UserResource($user),
