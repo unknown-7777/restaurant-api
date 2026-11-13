@@ -56,7 +56,7 @@ class TableController extends Controller
                     return ['error' => 'This ordering visit has ended. Scan the table QR code to start a new visit.', 'status' => 410];
                 }
 
-                $session->update(['expires_at' => $now->copy()->addHours(4)]);
+                $session->update(['expires_at' => $now->copy()->addHours(QrGuestSession::LIFETIME_HOURS)]);
 
                 return [
                     'token' => $data['guest_session_token'],
@@ -87,7 +87,7 @@ class TableController extends Controller
             $session = QrGuestSession::create([
                 'table_id' => $table->id,
                 'token_hash' => hash('sha256', $token),
-                'expires_at' => $now->copy()->addHours(4),
+                'expires_at' => $now->copy()->addHours(QrGuestSession::LIFETIME_HOURS),
             ]);
             $table->update([
                 'status' => 'occupied',

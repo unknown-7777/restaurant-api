@@ -11,6 +11,8 @@ class QrGuestSession extends Model
 {
     use HasUuids;
 
+    public const LIFETIME_HOURS = 2;
+
     protected $fillable = [
         'table_id',
         'token_hash',

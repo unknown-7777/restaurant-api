@@ -48,7 +48,7 @@ Open the address printed by Vite, usually `http://localhost:5173`. The frontend 
 9. **Staff records payment.** A waiter, cashier, manager, or admin processes payment for the table bill. When all open orders are paid, the app closes the temporary guest session and marks the table available. If guests leave without ordering, they can finish the visit from the customer page. Staff can also clear the table manually if the customer closes the page without finishing.
 10. **Customer leaves feedback.** After payment, the customer can rate the restaurant and leave a comment. Admins and managers can review feedback.
 
-Each table can have one active QR guest session at a time. Starting a visit marks the table occupied and closes QR access for additional visitors. Its private token expires after four hours and lets the same browser tab resume after a reload. Completing payment or finishing a no-order visit closes the session. The old URL stays locked until staff enables QR ordering for the next guest from the Tables page. The printed QR code stays the same, but copied links cannot start visits while QR access is closed. The customer and staff screens refresh automatically while open, so order and table changes usually appear within five seconds. This is periodic API refresh, not WebSocket push.
+Each table can have one active QR guest session at a time. Starting a visit marks the table occupied and closes QR access for additional visitors. Its private token expires after two hours. Polling existing order statuses extends the session when it is close to expiry, and resuming in the same browser tab resets the window. Completing payment or finishing a no-order visit closes the session. The old URL stays locked until staff enables QR ordering for the next guest from the Tables page. The printed QR code stays the same, but copied links cannot start visits while QR access is closed. The customer and staff screens refresh automatically while open, so order and table changes usually appear within five seconds. This is periodic API refresh, not WebSocket push.
 
 Table statuses are **available** (shown as Empty), **occupied** (an active QR visit or open order), and **reserved** (staff is holding the table for a booking; booking times are not tracked). After a QR visit, staff opens the table details and chooses **Enable QR for next guest**. The API only allows this for an available table with no active visit or open orders.
 
@@ -64,7 +64,7 @@ For table bills, the customer chooses cash, card, or QRIS. Staff cannot change t
 - **Kitchen:** Start preparing confirmed orders and mark them ready.
 - **Cashier:** View orders and process payments.
 
-The backend checks access as well as the frontend hiding pages. Customer QR ordering uses a temporary table-scoped token that expires after four hours and is closed after payment. The printed QR code stays the same; scanning it again starts a new guest session.
+The backend checks access as well as the frontend hiding pages. Customer QR ordering uses a temporary table-scoped token that expires after two hours and is closed after payment. Staff must re-enable the table QR before another guest can use the same printed code.
 
 ## Where to find things
 

@@ -121,7 +121,14 @@ class OrderController extends Controller
             return $this->error('Ordering session not found. Scan the table QR code again.', 404);
         }
 
+        $now = now();
         $sessionActive = !$session->closed_at && $session->expires_at->isFuture();
+        if ($sessionActive && $session->expires_at->lessThanOrEqualTo($now->copy()->addHour())) {
+            $session->update([
+                'expires_at' => $now->addHours(QrGuestSession::LIFETIME_HOURS),
+            ]);
+        }
+
         $orders = Order::whereIn('id', $validated['order_ids'])
             ->where('qr_guest_session_id', $session->id)
             ->whereHas('table', fn ($query) => $query->where('qr_code', $validated['table_qr_code']))
