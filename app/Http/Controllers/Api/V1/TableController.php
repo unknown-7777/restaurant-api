@@ -36,7 +36,7 @@ class TableController extends Controller
     public function startGuestSession(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'table_qr_code' => ['required', 'uuid', 'exists:tables,qr_code'],
+            'table_qr_code'       => ['required', 'uuid', 'exists:tables,qr_code'],
             'guest_session_token' => ['sometimes', 'string', 'size:64'],
         ]);
 
