@@ -16,17 +16,21 @@ class StoreQrOrderRequest extends FormRequest
     {
         return [
             'table_qr_code'           => ['required', 'uuid', 'exists:tables,qr_code'],
-            'notes'                   => ['nullable', 'string'],
-            'items'                   => ['required', 'array', 'min:1'],
+            'guest_session_token'     => ['required', 'string', 'size:64'],
+            'notes'                   => ['nullable', 'string', 'max:1000'],
+            'items'                   => ['required', 'array', 'min:1', 'max:20'],
             'items.*.menu_item_id'    => [
                 'required',
                 'uuid',
                 Rule::exists('menu_items', 'id')->where(fn ($query) => $query->where('is_available', true)),
             ],
-            'items.*.quantity'        => ['required', 'integer', 'min:1'],
-            'items.*.special_request' => ['nullable', 'string'],
-            'items.*.modifiers'       => ['nullable', 'array'],
-            'items.*.modifiers.*'     => ['uuid', 'exists:modifiers,id'],
+            'items.*.quantity'        => ['required', 'integer', 'min:1', 'max:20'],
+            'items.*.special_request' => ['nullable', 'string', 'max:500'],
+            'items.*.modifiers'       => ['nullable', 'array', 'max:10'],
+            'items.*.modifiers.*'     => [
+                'uuid',
+                Rule::exists('modifiers', 'id')->where(fn ($query) => $query->where('is_available', true)),
+            ],
         ];
     }
 }

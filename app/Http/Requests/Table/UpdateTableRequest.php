@@ -13,9 +13,15 @@ class UpdateTableRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'status'   => ['sometimes', 'in:available,occupied,reserved'],
-            'capacity' => ['sometimes', 'integer', 'min:1'],
+            'qr_access_enabled' => ['sometimes', 'boolean'],
         ];
+
+        if ($this->user()?->role !== 'waiter') {
+            $rules['capacity'] = ['sometimes', 'integer', 'min:1'];
+        }
+
+        return $rules;
     }
 }

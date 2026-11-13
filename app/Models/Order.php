@@ -16,6 +16,7 @@ class Order extends Model
 
     protected $fillable = [
         'table_id',
+        'qr_guest_session_id',
         'user_id',
         'status',
         'total_amount',
@@ -35,6 +36,11 @@ class Order extends Model
     public function table(): BelongsTo
     {
         return $this->belongsTo(Table::class);
+    }
+
+    public function qrGuestSession(): BelongsTo
+    {
+        return $this->belongsTo(QrGuestSession::class);
     }
 
     public function user(): BelongsTo

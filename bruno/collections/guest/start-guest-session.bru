@@ -1,0 +1,28 @@
+meta {
+  name: Start QR Guest Session
+  type: http
+  seq: 0
+}
+
+post {
+  url: {{base_url}}/api/v1/qr-tables/session
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "table_qr_code": "{{table_qr_code}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("guest_session_token", res.body.data.token);
+  }
+}

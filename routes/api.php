@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\TableController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\RestaurantFeedbackController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -26,11 +27,13 @@ Route::prefix('v1')->group(function () {
     Route::get('menu-items', [MenuItemController::class, 'index']);
     Route::get('menu-items/{menuItem}', [MenuItemController::class, 'show']);
     Route::get('menu-items/{menuItem}/modifiers', [ModifierController::class, 'index']);
+    Route::post('qr-tables/session', [TableController::class, 'startGuestSession']);
+    Route::post('qr-tables/finish', [TableController::class, 'finishGuestSession']);
     Route::get('tables/qr/{qrCode}', [TableController::class, 'showByQrCode']);
-    Route::post('qr-orders', [OrderController::class, 'storeFromQr'])->middleware('throttle:120,1');
-    Route::post('qr-orders/status', [OrderController::class, 'showManyFromQr'])->middleware('throttle:120,1');
-    Route::post('qr-tables/request-bill', [TableController::class, 'requestBillFromQr'])->middleware('throttle:20,1');
-    Route::post('qr-orders/{order}/feedback', [RestaurantFeedbackController::class, 'storeFromQr'])->middleware('throttle:20,1');
+    Route::post('qr-orders', [OrderController::class, 'storeFromQr'])->middleware('throttle:qr-orders');
+    Route::post('qr-orders/status', [OrderController::class, 'showManyFromQr']);
+    Route::post('qr-tables/request-bill', [TableController::class, 'requestBillFromQr']);
+    Route::post('qr-orders/{order}/feedback', [RestaurantFeedbackController::class, 'storeFromQr']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -43,6 +46,7 @@ Route::prefix('v1')->group(function () {
 
         // Users — admin only
         Route::middleware('role:admin,manager')->group(function () {
+            Route::get('dashboard', [DashboardController::class, 'index']);
             Route::get('feedback', [RestaurantFeedbackController::class, 'index']);
         });
 
@@ -82,9 +86,11 @@ Route::prefix('v1')->group(function () {
         // Tables
         Route::get('tables', [TableController::class, 'index']);
         Route::get('tables/{table}', [TableController::class, 'show']);
+        Route::middleware('role:admin,manager,waiter')->group(function () {
+            Route::put('tables/{table}', [TableController::class, 'update']);
+        });
         Route::middleware('role:admin,manager')->group(function () {
             Route::post('tables', [TableController::class, 'store']);
-            Route::put('tables/{table}', [TableController::class, 'update']);
             Route::delete('tables/{table}', [TableController::class, 'destroy']);
         });
 

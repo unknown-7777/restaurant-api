@@ -10,6 +10,7 @@ use App\Http\Requests\Order\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\QrGuestSession;
 use App\Models\Table;
 use App\Services\OrderService;
 use App\Traits\ApiResponse;
@@ -63,36 +64,75 @@ class OrderController extends Controller
 
     public function storeFromQr(StoreQrOrderRequest $request): JsonResponse
     {
-        $table = \App\Models\Table::where('qr_code', $request->table_qr_code)->firstOrFail();
-        if ($table->bill_requested_at) {
-            return $this->error('The table bill has been requested. Please wait for staff to finish payment before placing another order.', 422);
+        $result = DB::transaction(function () use ($request) {
+            $table = Table::where('qr_code', $request->table_qr_code)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($table->bill_requested_at) {
+                return ['error' => 'The table bill has been requested. Please wait for staff to finish payment before placing another order.'];
+            }
+
+            $session = QrGuestSession::where('table_id', $table->id)
+                ->where('token_hash', hash('sha256', $request->guest_session_token))
+                ->whereNull('closed_at')
+                ->where('expires_at', '>', now())
+                ->lockForUpdate()
+                ->first();
+
+            if (!$session) {
+                return [
+                    'error' => 'This ordering session has ended. Scan the table QR code again to start a new visit.',
+                    'status' => 410,
+                ];
+            }
+
+            return ['order' => $this->orderService->createOrder([
+                'table_id' => $table->id,
+                'qr_guest_session_id' => $session->id,
+                'user_id'  => null,
+                'notes'    => $request->notes,
+                'items'    => $request->items,
+            ])];
+        });
+
+        if (isset($result['error'])) {
+            return $this->error($result['error'], $result['status'] ?? 422);
         }
 
-        $order = $this->orderService->createOrder([
-            'table_id' => $table->id,
-            'user_id'  => null,
-            'notes'    => $request->notes,
-            'items'    => $request->items,
-        ]);
-
-        return $this->success(new OrderResource($order), 'QR order created.', 201);
+        return $this->success(new OrderResource($result['order']), 'QR order created.', 201);
     }
 
     public function showManyFromQr(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'table_qr_code' => ['required', 'uuid', 'exists:tables,qr_code'],
+            'guest_session_token' => ['required', 'string', 'size:64'],
             'order_ids' => ['required', 'array', 'min:1', 'max:10'],
             'order_ids.*' => ['required', 'uuid'],
         ]);
 
+        $table = Table::where('qr_code', $validated['table_qr_code'])->firstOrFail();
+        $session = QrGuestSession::where('table_id', $table->id)
+            ->where('token_hash', hash('sha256', $validated['guest_session_token']))
+            ->first();
+
+        if (!$session) {
+            return $this->error('Ordering session not found. Scan the table QR code again.', 404);
+        }
+
+        $sessionActive = !$session->closed_at && $session->expires_at->isFuture();
         $orders = Order::whereIn('id', $validated['order_ids'])
+            ->where('qr_guest_session_id', $session->id)
             ->whereHas('table', fn ($query) => $query->where('qr_code', $validated['table_qr_code']))
             ->with(['table', 'items.menuItem', 'items.modifiers', 'payment'])
             ->latest()
             ->get();
 
-        return $this->success(OrderResource::collection($orders));
+        return $this->success([
+            'orders' => OrderResource::collection($orders),
+            'session_active' => $sessionActive,
+        ]);
     }
 
     public function show(Order $order): JsonResponse

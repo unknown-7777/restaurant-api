@@ -18,11 +18,15 @@ class Table extends Model
         'qr_code',
         'bill_requested_at',
         'bill_requested_method',
+        'qr_access_enabled',
     ];
 
     protected function casts(): array
     {
-        return ['bill_requested_at' => 'datetime'];
+        return [
+            'bill_requested_at' => 'datetime',
+            'qr_access_enabled' => 'boolean',
+        ];
     }
 
     public function orders(): HasMany

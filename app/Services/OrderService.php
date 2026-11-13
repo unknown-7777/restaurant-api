@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\QrGuestSession;
 use App\Models\Table;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +26,7 @@ class OrderService
         return DB::transaction(function () use ($data) {
             $order = Order::create([
                 'table_id'     => $data['table_id'] ?? null,
+                'qr_guest_session_id' => $data['qr_guest_session_id'] ?? null,
                 'user_id'      => $data['user_id'] ?? null,
                 'status'       => 'pending',
                 'total_amount' => 0,
@@ -59,7 +61,9 @@ class OrderService
 
             if (!empty($itemData['modifiers'])) {
                 foreach ($itemData['modifiers'] as $modifierId) {
-                    $modifier = $menuItem->modifiers()->findOrFail($modifierId);
+                    $modifier = $menuItem->modifiers()
+                        ->where('is_available', true)
+                        ->findOrFail($modifierId);
                     $orderItem->modifiers()->create([
                         'modifier_id' => $modifier->id,
                         'name'        => $modifier->name,
@@ -103,15 +107,20 @@ class OrderService
         $order->update(['status' => $newStatus]);
 
         if (in_array($newStatus, ['paid', 'cancelled'], true)) {
-            $this->syncTableStatus($order->table_id);
+            $this->syncTableStatus($order->table_id, $newStatus === 'paid');
         }
 
         return $order->fresh(['items.modifiers', 'table', 'payment']);
     }
 
-    private function syncTableStatus(?string $tableId): void
+    private function syncTableStatus(?string $tableId, bool $closeGuestSessions = false): void
     {
         if (!$tableId) {
+            return;
+        }
+
+        $table = Table::whereKey($tableId)->lockForUpdate()->first();
+        if (!$table) {
             return;
         }
 
@@ -119,8 +128,21 @@ class OrderService
             ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
             ->exists();
 
-        Table::whereKey($tableId)->update([
-            'status' => $hasOpenOrders ? 'occupied' : 'available',
+        if (!$hasOpenOrders && $closeGuestSessions) {
+            QrGuestSession::where('table_id', $tableId)
+                ->whereNull('closed_at')
+                ->update(['closed_at' => now()]);
+            $table->qr_access_enabled = false;
+        }
+
+        $hasActiveGuestSession = QrGuestSession::where('table_id', $tableId)
+            ->whereNull('closed_at')
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        $table->update([
+            'status' => $hasOpenOrders || $hasActiveGuestSession ? 'occupied' : 'available',
+            'qr_access_enabled' => $table->qr_access_enabled,
         ]);
     }
 

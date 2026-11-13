@@ -1,0 +1,26 @@
+meta {
+  name: Enable Table QR Ordering
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/api/v1/tables/{{table_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "qr_access_enabled": true
+  }
+}

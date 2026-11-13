@@ -25,7 +25,16 @@ class AppServiceProvider extends ServiceProvider
         // Restaurants often serve many guests behind one Wi-Fi IP. Give the
         // public API enough shared headroom while keeping a firm per-IP cap.
         RateLimiter::for('api', fn (Request $request) =>
-            Limit::perMinute(600)->by($request->user()?->id ?: $request->ip())
+            Limit::perMinute(1800)->by($request->user()?->id ?: $request->ip())
         );
+
+        RateLimiter::for('qr-orders', function (Request $request) {
+            $tableQrCode = strtolower((string) $request->input('table_qr_code', 'missing'));
+
+            return [
+                Limit::perMinute(300)->by('qr-order-ip:' . $request->ip()),
+                Limit::perMinute(60)->by('qr-order-table:' . $tableQrCode),
+            ];
+        });
     }
 }

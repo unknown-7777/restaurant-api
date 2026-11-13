@@ -66,6 +66,9 @@ class PaymentController extends Controller
             if (!$table->bill_requested_at) {
                 return ['error' => 'The customer has not requested the table bill.'];
             }
+            if ($request->method !== $table->bill_requested_method) {
+                return ['error' => 'Use the payment method selected by the customer: ' . strtoupper($table->bill_requested_method) . '.'];
+            }
 
             $unpaidOrders = Order::where('table_id', $table->id)
                 ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served'])
